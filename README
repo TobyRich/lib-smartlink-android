@@ -1,0 +1,10 @@
+New Smartlink library which outputs a jar file.
+
+requirements: gradle 1.10 installed
+
+to make a jar file:
+   gradle makeJar
+
+to clean files:
+   gradle clearJar
+
