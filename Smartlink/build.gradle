@@ -1,0 +1,48 @@
+apply plugin: 'android-library'
+
+android {
+    compileSdkVersion 18
+    buildToolsVersion "19.0.3"
+
+    defaultConfig {
+        minSdkVersion 18
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+
+    sourceSets {
+        main  {
+            java {
+                srcDir 'src/main/java'
+            }
+            resources {
+                srcDir 'src/../libs'
+            }
+        }
+    }
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:19.1.0'
+    compile files('libs/dd-plist.jar')
+    compile files('libs/commons-lang3-3.2.1.jar')
+}
+
+task clearJar(type: Delete) {
+    delete 'build/libs/LibSmartlink.jar'
+}
+
+task makeJar(type: Copy) {
+    from('build/bundles/release/')
+    into('build/libs/')
+    include('classes.jar')
+    rename ('classes.jar', 'LibSmartlink.jar')
+}
+
+makeJar.dependsOn(clearJar, build)
