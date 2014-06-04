@@ -1,4 +1,6 @@
 New Smartlink library which outputs a jar file.
+The location of the LibSmartlink.jar will be
+Smartlink/build/libs/LibSmartlink.jar
 
 requirements: gradle 1.10 installed
 
