@@ -1,4 +1,13 @@
-New Smartlink library which outputs a jar file.
+TobyRich SmartLink Library for Android
+--------------------------------------
+
+This project is used by app-powerup-android and app-smartplane-android to
+interact with Bluetooth Smart devices. It abstracts out hardware-specific
+code and presents to the app a more conceptual view of the device it is
+interacting with.
+
+Build Instructions
+------------------
 The location of the LibSmartlink.jar will be
 Smartlink/build/libs/LibSmartlink.jar
 
