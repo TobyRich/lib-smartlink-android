@@ -385,10 +385,7 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         }
 
         Log.d(TAG, mDevice.getName() + " found");
-        // We are hardcoding the device name for now, because filtering scan results on 128 bit UUID
-        // currently does not work (Android bug). We will implement our own filtering later.
-        if (mDevice.getName().equalsIgnoreCase("TailorToys PowerUp") ||
-                mDevice.getName().equalsIgnoreCase("TobyRich SmartPlane")) {
+        if (includesPrimaryService(scanRecord)) {
             // Connection is done on the command queue. Since this needs extra data (mDevice, mOwner etc.),
             // we'll create a special-case subclass of BleCommand and override its run method.
             // Using the command queue is necessary to work around Samsung bug. (check T4 on Phabricator).
