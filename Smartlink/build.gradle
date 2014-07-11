@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         minSdkVersion 18
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "2.0"
     }
     buildTypes {
         release {
@@ -31,7 +31,6 @@ android {
 dependencies {
     compile 'com.android.support:support-v4:19.1.0'
     compile files('libs/dd-plist.jar')
-    compile files('libs/commons-lang3-3.2.1.jar')
 }
 
 task clearJar(type: Delete) {
@@ -40,6 +39,8 @@ task clearJar(type: Delete) {
 
 task makeJar(type: Copy) {
     from('build/intermediates/bundles/release/')
+    /* TODO: build everything as a standalone jar */
+    // from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     into('build/libs/')
     include('classes.jar')
     rename ('classes.jar', 'LibSmartlink.jar')

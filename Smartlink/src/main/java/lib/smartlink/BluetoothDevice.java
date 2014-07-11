@@ -45,7 +45,6 @@ import com.dd.plist.NSNumber;
 import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
@@ -63,10 +62,12 @@ import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import static org.apache.commons.lang3.ArrayUtils.reverse;
-
 /*
- * Created by pvaibhav on 13/02/2014.
+ * @author pvaibhav
+ * @date 13 Feb 20114
+ *
+ * @edit Radu Hambasan
+ * @date 11 Jul 2014
  */
 @SuppressWarnings({"ConstantConditions", "AccessStaticViaInstance"})
 // because we are already checking for null pointers for delegate
@@ -102,8 +103,8 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
     private UUID[] mPrimaryServices;
     private final Semaphore mSemaphore = new Semaphore(1); // single threaded access
 
-    //  counter[0] represents rudder, counter[1] represents motor
-    private boolean[] allowCommand = {true, true};
+    boolean allowRudder = true;
+    boolean allowMotor = true;
 
     protected class BleCommand implements Comparable<BleCommand>, Runnable {
         public static final int ENABLE_NOTIFICATION = 0;
@@ -178,7 +179,7 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
                         mBluetoothGatt.readCharacteristic(c);
                         break;
                     case WRITE:
-                        switch(extraOpt) {
+                        switch (extraOpt) {
                             case NO_EXTRA:
                                 mBluetoothGatt.writeCharacteristic(c);
                                 break;
@@ -187,19 +188,14 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
                                 int valM = smServM.mEngineDP.fetchData();
                                 c.setValue(valM, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
                                 mBluetoothGatt.writeCharacteristic(c);
-                                allowCommand[1] = true;
-                                /* try {
-                                    Thread.sleep(10);
-                                } catch (InterruptedException ex) {
-                                    Log.wtf("Sleeping: ", "Interrupt occurred");
-                                }*/
+                                allowMotor = true;
                                 break;
                             case EXTRA_RUDDER:
                                 BLEService smServR = charToDriver.get(c);
                                 int valR = smServR.mRudderDp.fetchData();
                                 c.setValue(valR, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                                 mBluetoothGatt.writeCharacteristic(c);
-                                allowCommand[0] = true;
+                                allowRudder = true;
                                 try {
                                     Thread.sleep(85);
                                 } catch (InterruptedException ex) {
@@ -267,15 +263,15 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
 
         try {
             mPlist = (NSDictionary) PropertyListParser.parse(plistFile);
-        } catch (PropertyListFormatException e){
+        } catch (PropertyListFormatException e) {
             throw new IllegalArgumentException("invalid plistFile");
-        } catch (ParserConfigurationException e){
+        } catch (ParserConfigurationException e) {
             throw new IllegalArgumentException("invalid plistFile");
-        } catch (ParseException e){
+        } catch (ParseException e) {
             throw new IllegalArgumentException("invalid plistFile");
-        } catch (SAXException e){
+        } catch (SAXException e) {
             throw new IllegalArgumentException("invalid plistFile");
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new IllegalArgumentException("invalid plistFile");
         }
         // Collect basic settings
@@ -339,7 +335,7 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
     }
 
     public void disconnect() {
-        enqueOperation(BleCommand.DISCONNECT);
+        enqueueOperation(BleCommand.DISCONNECT);
     }
 
     public void updateSignalStrength() {
@@ -403,11 +399,11 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
             final int len = scanRecord[offset++];
             final int type = scanRecord[offset++];
             if (type == ADV_128BIT_UUID_ALL || type == ADV_128BIT_UUID_MORE) {
-                byte[] uuidbytes = ArrayUtils.subarray(scanRecord, offset, offset + len - 1);
-                reverse(uuidbytes);
+                byte[] uuidBytes = Util.subarray(scanRecord, offset, offset + len - 1);
+                Util.reverse(uuidBytes);
 
                 for (UUID primary : mPrimaryServices) {
-                    if (uuidEqualToByteArray(primary, uuidbytes))
+                    if (uuidEqualToByteArray(primary, uuidBytes))
                         return true;
                 }
             } else {
@@ -432,8 +428,6 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         }
 
         Log.d(TAG, mDevice.getName() + " found");
-        // We are hardcoding the device name for now, because filtering scan results on 128 bit UUID
-        // currently does not work (Android bug). We will implement our own filtering later.
         if (includesPrimaryService(scanRecord)) {
             // Connection is done on the command queue. Since this needs extra data (mDevice, mOwner etc.),
             // we'll create a special-case subclass of BleCommand and override its run method.
@@ -462,7 +456,7 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
                 mBluetoothAdapter.stopLeScan(this);
                 mBluetoothGatt = gatt;
                 mSemaphore.release(); // because connection is also a queued operation
-                enqueOperation(BleCommand.DISCOVER_SERVICES);
+                enqueueOperation(BleCommand.DISCOVER_SERVICES);
                 break;
             case BluetoothProfile.STATE_DISCONNECTED:
                 charToDriver.clear();
@@ -557,12 +551,12 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         mSemaphore.release();
     }
 
-    protected void enqueOperation(int operation, BluetoothGattCharacteristic c) {
+    protected void enqueueOperation(int operation, BluetoothGattCharacteristic c) {
         // Android ignores requests if any previous requests are pending. So we must serialize
         // all read requests using a FIFO or priority queue.
         final BleCommand op = new BleCommand(operation, c);
         final int size = mCommandQueue.getQueue().size();
-        if (size >= 20 && size % 20 == 0 )
+        if (size >= 20 && size % 20 == 0)
             Log.w(TAG, "op queue too large: " + mCommandQueue.getQueue().size());
         // Sometimes for some reason, too many items get queued
 //        if (mCommandQueue.getQueue().size() > 20) {
@@ -572,12 +566,12 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         mCommandQueue.execute(op); // actually queues the op, executes when BLE stack is free
     }
 
-    protected void enqueOperation(int operation) {
+    protected void enqueueOperation(int operation) {
         // For operations that don't need a characteristic
-        enqueOperation(operation, null);
+        enqueueOperation(operation, null);
     }
 
-    protected void enqueOperation(int operation, BluetoothGattCharacteristic c, int extra) {
+    protected void enqueueOperation(int operation, BluetoothGattCharacteristic c, int extra) {
         // This means that other write commands are being enqued,
         // so they will set the desired value
         final int qSize = mCommandQueue.getQueue().size();
@@ -587,11 +581,11 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
             return;
         }
         if (extra == BleCommand.EXTRA_RUDDER) {
-            if (!allowCommand[0]) return;
-            else allowCommand[0] = false;
+            if (!allowRudder) return;
+            else allowRudder = false;
         } else if (extra == BleCommand.EXTRA_MOTOR) {
-            if (!allowCommand[1]) return;
-            else allowCommand[1] = false;
+            if (!allowMotor) return;
+            else allowMotor = false;
         }
         final BleCommand op = new BleCommand(operation, c, extra);
 

@@ -30,10 +30,9 @@ package lib.smartlink.driver;
 import android.util.Log;
 
 import lib.smartlink.BLEService;
+import lib.smartlink.Util;
 
-import org.apache.commons.lang3.ArrayUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -157,7 +156,7 @@ public class BLEFirmwareUploadService extends BLEService {
             byte[] header = new byte[16];
             f.read(header, 0, 16);
             // Skip first 4 bytes (CRC)
-            ImageHeader hdr = new ImageHeader(ArrayUtils.subarray(header, 4, 17)); // end index exclusive
+            ImageHeader hdr = new ImageHeader(Util.subarray(header, 4, 17)); // end index exclusive
             return hdr.toString();
         } catch (FileNotFoundException e) {
             return "Unknown";
@@ -191,7 +190,7 @@ public class BLEFirmwareUploadService extends BLEService {
 
     private boolean isCorrectImage() {
         // Check if given image is correct, i.e. of a different "A/B" type than the one on device
-        ImageHeader hdr = new ImageHeader(ArrayUtils.subarray(_imageData, 4, 17));
+        ImageHeader hdr = new ImageHeader(Util.subarray(_imageData, 4, 17));
         return (hdr.versionCode & 0x1) != (_imgVersion & 0x1);
     }
 
@@ -201,7 +200,7 @@ public class BLEFirmwareUploadService extends BLEService {
         byte[] requestData = new byte[12];
         ByteBuffer b = ByteBuffer.wrap(requestData).order(ByteOrder.LITTLE_ENDIAN);
 
-        ImageHeader imgHeader = new ImageHeader(ArrayUtils.subarray(_imageData, 4, 17));
+        ImageHeader imgHeader = new ImageHeader(Util.subarray(_imageData, 4, 17));
         b.putShort((short) (imgHeader.versionCode & 0xffff));
         b.putShort((short) (imgHeader.length & 0xffff));
         b.put(imgHeader.imageID.getBytes());
@@ -237,7 +236,7 @@ public class BLEFirmwareUploadService extends BLEService {
         ByteBuffer b = ByteBuffer.wrap(requestData).order(ByteOrder.LITTLE_ENDIAN);
 
         b.putShort((short) (_iBlocks & 0xffff));
-        b.put(ArrayUtils.subarray(_imageData, _iBytes, _iBytes + OAD_BLOCK_SIZE));
+        b.put(Util.subarray(_imageData, _iBytes, _iBytes + OAD_BLOCK_SIZE));
         writeBytes(requestData, "blockrequest");
 
         _iBlocks++;
