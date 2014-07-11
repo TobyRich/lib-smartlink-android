@@ -429,6 +429,11 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
 
         Log.d(TAG, mDevice.getName() + " found");
         if (includesPrimaryService(scanRecord)) {
+            Delegate delegRef = delegate.get();
+            if (delegRef != null) {
+                /* XXX: should be d, not this */
+                delegRef.didStartConnectingTo(this, rssi);
+            }
             // Connection is done on the command queue. Since this needs extra data (mDevice, mOwner etc.),
             // we'll create a special-case subclass of BleCommand and override its run method.
             // Using the command queue is necessary to work around Samsung bug. (check T4 on Phabricator).
