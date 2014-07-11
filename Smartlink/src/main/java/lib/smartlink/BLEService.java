@@ -35,11 +35,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
 /**
- * @author pvaibhav
- * @date 13 Feb 2014
- *
- * @edit Radu Hambasan
- * @date 10 Jul 2014
+ * Created by pvaibhav on 13/02/2014.
  */
 public abstract class BLEService {
 
@@ -48,15 +44,10 @@ public abstract class BLEService {
     protected HashMap<String, BluetoothGattCharacteristic> mFields;
     protected BluetoothGatt mGatt;
 
-    public DataPool mEngineDP;
-    public DataPool mRudderDp;
-
     public void attach(BluetoothGatt gatt, HashMap<String, BluetoothGattCharacteristic> fields, BluetoothDevice bluetoothDevice) {
         this.mParent = new WeakReference<BluetoothDevice>(bluetoothDevice);
         this.mGatt = gatt;
         this.mFields = fields;
-        mEngineDP = new DataPool(1);
-        mRudderDp = new DataPool(1);
         attached();
         Log.d(TAG, "Initialized service driver");
     }
@@ -75,13 +66,7 @@ public abstract class BLEService {
 
     protected void setNotification(String name, boolean enable) {
         try {
-            if (enable) {
-                mParent.get().enqueOperation(BluetoothDevice.BleCommand.ENABLE_NOTIFICATION,
-                        mFields.get(name));
-            } else {
-                mParent.get().enqueOperation(BluetoothDevice.BleCommand.DISABLE_NOTIFICATION,
-                        mFields.get(name));
-            }
+            mParent.get().enqueOperation(BluetoothDevice.BleCommand.ENABLE_NOTIFICATION, mFields.get(name));
         } catch (NullPointerException ex) {
             Log.w(TAG, "No delegate set");
         }
@@ -117,49 +102,24 @@ public abstract class BLEService {
         c.setWriteType(responsNeeded ? BluetoothGattCharacteristic.WRITE_TYPE_SIGNED : BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
     }
 
-    @SuppressWarnings("StringEquality")
     protected void writeUint8Value(short value, String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
-        BluetoothDevice bDevice = mParent.get();
-        if (bDevice == null) {
-            Log.w(TAG, "No delegate set.");
-            return;
+        c.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+        try {
+            mParent.get().enqueOperation(BluetoothDevice.BleCommand.WRITE, c);
+        } catch (NullPointerException ex) {
+            Log.w(TAG, "No delegate set");
         }
-        int extraOpt = BluetoothDevice.BleCommand.NO_EXTRA;
-        // intentional literal comparison with ==, for efficiency
-        if (characteristic == "engine") {
-            mEngineDP.postData(value);
-            extraOpt = BluetoothDevice.BleCommand.EXTRA_MOTOR;
-        } else if (characteristic == "rudder") {
-            mRudderDp.postData(value);
-            extraOpt = BluetoothDevice.BleCommand.EXTRA_RUDDER;
-        } else {
-            c.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-        }
-
-        mParent.get().enqueOperation(BluetoothDevice.BleCommand.WRITE, c, extraOpt);
     }
 
     protected void writeInt8Value(byte value, String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
-        BluetoothDevice bDevice = mParent.get();
-        if (bDevice == null) {
-            Log.w(TAG, "No delegate set.");
-            return;
+        c.setValue(value, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
+        try {
+            mParent.get().enqueOperation(BluetoothDevice.BleCommand.WRITE, c);
+        } catch (NullPointerException ex) {
+            Log.w(TAG, "No delegate set");
         }
-        int extraOpt = BluetoothDevice.BleCommand.NO_EXTRA;
-        // intentional literal comparison with ==, for efficiency
-        if (characteristic == "engine") {
-            mEngineDP.postData(value);
-            extraOpt = BluetoothDevice.BleCommand.EXTRA_MOTOR;
-        } else if (characteristic == "rudder") {
-            mRudderDp.postData(value);
-            extraOpt = BluetoothDevice.BleCommand.EXTRA_RUDDER;
-        } else {
-            c.setValue(value, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
-        }
-
-        mParent.get().enqueOperation(BluetoothDevice.BleCommand.WRITE, c, extraOpt);
     }
 
     protected void writeBytes(byte[] value, String characteristic) {
