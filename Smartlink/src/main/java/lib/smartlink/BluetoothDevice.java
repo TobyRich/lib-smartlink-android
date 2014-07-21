@@ -330,8 +330,16 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         }
     }
 
-    public void connect() {
-        initializeBluetooth();
+    public void connect() throws BluetoothDisabledException {
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) mOwner.getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = bluetoothManager.getAdapter();
+
+        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
+            startScanning();
+        } else {
+            throw new BluetoothDisabledException("Bluetooth disabled.");
+        }
     }
 
     public void disconnect() {
@@ -353,7 +361,6 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         // Ensures Bluetooth is available on the device and it is enabled. If not,
         // displays a dialog requesting user permission to enable Bluetooth.
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            Log.w(TAG, "Bluetooth was not enabled, showing intent to enable");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             mOwner.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
@@ -427,16 +434,19 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
             return;
         }
 
-        Log.d(TAG, mDevice.getName() + " found");
+        Log.i(TAG, mDevice.getName() + " found");
         // We are hardcoding the device name for now, because filtering scan results on 128 bit UUID
         // for some reason, on SOME devices we get an IndexOutOfBoundsException
         // when using includesPrimaryServices() length:62, index: -67
         if (mDevice.getName().equalsIgnoreCase("TailorToys PowerUp") ||
                 mDevice.getName().equalsIgnoreCase("TobyRich SmartPlane")) {
+            Log.i(TAG, "Trying to connect to " + mDevice.getName());
             Delegate delegRef = delegate.get();
             if (delegRef != null) {
                 /* XXX: should be d, not this */
                 delegRef.didStartConnectingTo(this, rssi);
+            } else {
+                Log.i(TAG, "Delegate was not set");
             }
             // Connection is done on the command queue. Since this needs extra data (mDevice, mOwner etc.),
             // we'll create a special-case subclass of BleCommand and override its run method.
