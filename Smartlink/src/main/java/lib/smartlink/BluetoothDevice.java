@@ -428,7 +428,11 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         }
 
         Log.d(TAG, mDevice.getName() + " found");
-        if (includesPrimaryService(scanRecord)) {
+        // We are hardcoding the device name for now, because filtering scan results on 128 bit UUID
+        // for some reason, on SOME devices we get an IndexOutOfBoundsException
+        // when using includesPrimaryServices() length:62, index: -67
+        if (mDevice.getName().equalsIgnoreCase("TailorToys PowerUp") ||
+                mDevice.getName().equalsIgnoreCase("TobyRich SmartPlane")) {
             Delegate delegRef = delegate.get();
             if (delegRef != null) {
                 /* XXX: should be d, not this */
