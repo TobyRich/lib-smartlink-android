@@ -68,7 +68,7 @@ public class BLESmartplaneService
             value = 126;
         if (value < -126)
             value = -126;
-        writeInt8Value((byte)value, "rudder");
+        writeInt8Value((byte) value, "rudder");
         lastRudder = value;
     }
 
@@ -93,10 +93,13 @@ public class BLESmartplaneService
         if (c.equalsIgnoreCase("chargestatus")) {
             int status = getUint8ValueForCharacteristic("chargestatus");
             try {
-                if (status == 0)
+                if (status == 0) {
                     delegate.get().didStopChargingBattery();
-                else
+                } else if (status == -1) {
+                    Log.e("SmartPlaneService", "could not get charge status");
+                } else {
                     delegate.get().didStartChargingBattery();
+                }
             } catch (NullPointerException ex) {
                 Log.w(this.getClass().getName(), "No delegate set");
             }

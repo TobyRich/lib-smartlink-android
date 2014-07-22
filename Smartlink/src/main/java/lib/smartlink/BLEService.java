@@ -94,6 +94,9 @@ public abstract class BLEService {
 
     protected Integer getUint8ValueForCharacteristic(String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
+        if (c == null) {
+            return -1;
+        }
         return c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
     }
 
