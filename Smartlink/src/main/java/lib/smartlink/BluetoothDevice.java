@@ -56,6 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -483,9 +484,10 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
                 // Make a fresh command queue
                 mCommandQueue = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new PriorityBlockingQueue<Runnable>());
                 mSemaphore.release();
-                mBluetoothGatt.close();
-                mBluetoothGatt.close();
-                mBluetoothGatt = null;
+                if (mBluetoothGatt != null) {
+                    mBluetoothGatt.close();
+                    mBluetoothGatt = null;
+                }
 
                 if (delegate.get() != null) {
                     delegate.get().didDisconnect(this);
@@ -607,8 +609,11 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
             else allowMotor = false;
         }
         final BleCommand op = new BleCommand(operation, c, extra);
-
-        mCommandQueue.execute(op); // actually queues the op, executes when BLE stack is free
+        try {
+            mCommandQueue.execute(op); // actually queues the op, executes when BLE stack is free
+        } catch (RejectedExecutionException ex) {
+            Log.i(TAG, "Rejected execution for command " + op.toString());
+        }
     }
 
     private void writeNotificationDescriptor(BluetoothGattCharacteristic c, boolean enable) {
