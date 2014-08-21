@@ -106,12 +106,6 @@ public abstract class BLEService {
         return c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0);
     }
 
-    protected Long get64bitValueForCharacteristic(String characteristic){
-        BluetoothGattCharacteristic c = mFields.get(characteristic);
-        Long l = ByteBuffer.wrap(this.getBytesForCharacteristic(characteristic)).getLong();
-        return l;
-    }
-
     protected byte[] getBytesForCharacteristic(String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         return c.getValue();

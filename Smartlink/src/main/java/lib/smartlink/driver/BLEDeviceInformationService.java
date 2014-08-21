@@ -32,6 +32,7 @@ import android.util.Log;
 import java.lang.ref.WeakReference;
 
 import lib.smartlink.BLEService;
+import lib.smartlink.Util;
 
 /**
  * Created by pvaibhav on 17/02/2014.
@@ -41,18 +42,18 @@ public class BLEDeviceInformationService
     public interface Delegate {
         void didUpdateSerialNumber(BLEDeviceInformationService device, String serialNumber);
 
-        void didUpdateSystemID(BLEDeviceInformationService device, Long systemID);
+        void didUpdateSystemID(BLEDeviceInformationService device, String systemID);
     }
 
     private String mSerialNumber;
-    private Long mSystemID;
+    private String mSystemID;
     public WeakReference<Delegate> delegate;
 
     public String getSerialNumber() {
         return mSerialNumber;
     }
 
-    public Long getSystemID() {
+    public String getSystemID() {
         return mSystemID;
     }
 
@@ -73,7 +74,16 @@ public class BLEDeviceInformationService
                 Log.w("lib-smartlink-devinfo", "No delegate set");
             }
         } else if (c.equalsIgnoreCase("systemid")) {
-            mSystemID = get64bitValueForCharacteristic("systemid");
+            byte[] sysIDBytes = getBytesForCharacteristic("systemid");
+
+            byte[] newSysIDBytes = new byte[6];
+            System.arraycopy(sysIDBytes, 0, newSysIDBytes, 0, 3);
+            System.arraycopy(sysIDBytes, 5, newSysIDBytes, 3, 3);
+
+            Util.reverse(newSysIDBytes);
+
+            mSystemID = Util.bytesToHex(newSysIDBytes).toLowerCase();
+
             if (mSystemID != null)
                 Log.i("lib-smartlink-devinfo", "System ID updated: " + mSystemID);
 
