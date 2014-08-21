@@ -32,6 +32,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.util.Log;
 
 import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 /**
@@ -103,6 +104,12 @@ public abstract class BLEService {
     protected Integer getUin16ValueForCharacteristic(String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         return c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0);
+    }
+
+    protected Long get64bitValueForCharacteristic(String characteristic){
+        BluetoothGattCharacteristic c = mFields.get(characteristic);
+        Long l = ByteBuffer.wrap(this.getBytesForCharacteristic(characteristic)).getLong();
+        return l;
     }
 
     protected byte[] getBytesForCharacteristic(String characteristic) {

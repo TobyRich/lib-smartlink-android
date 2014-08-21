@@ -29,9 +29,9 @@ package lib.smartlink.driver;
 
 import android.util.Log;
 
-import lib.smartlink.BLEService;
-
 import java.lang.ref.WeakReference;
+
+import lib.smartlink.BLEService;
 
 /**
  * Created by pvaibhav on 17/02/2014.
@@ -40,18 +40,26 @@ public class BLEDeviceInformationService
         extends BLEService {
     public interface Delegate {
         void didUpdateSerialNumber(BLEDeviceInformationService device, String serialNumber);
+
+        void didUpdateSystemID(BLEDeviceInformationService device, Long systemID);
     }
 
     private String mSerialNumber;
+    private Long mSystemID;
     public WeakReference<Delegate> delegate;
 
     public String getSerialNumber() {
         return mSerialNumber;
     }
 
+    public Long getSystemID() {
+        return mSystemID;
+    }
+
     @Override
     public void attached() {
         updateField("serialnumber");
+        updateField("systemid");
     }
 
     @Override
@@ -63,6 +71,18 @@ public class BLEDeviceInformationService
                 delegate.get().didUpdateSerialNumber(this, mSerialNumber);
             } catch (NullPointerException ex) {
                 Log.w("lib-smartlink-devinfo", "No delegate set");
+            }
+        } else if (c.equalsIgnoreCase("systemid")) {
+            mSystemID = get64bitValueForCharacteristic("systemid");
+            if (mSystemID != null)
+                Log.i("lib-smartlink-devinfo", "System ID updated: " + mSystemID);
+
+            if (delegate != null) {
+                try {
+                    delegate.get().didUpdateSystemID(this, mSystemID);
+                } catch (Exception ex) {
+                    Log.i("lib-smartlin-devinfo", "Error in delegate.");
+                }
             }
         }
     }
