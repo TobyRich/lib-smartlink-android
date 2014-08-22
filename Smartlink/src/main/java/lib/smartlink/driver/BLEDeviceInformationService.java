@@ -29,9 +29,10 @@ package lib.smartlink.driver;
 
 import android.util.Log;
 
-import lib.smartlink.BLEService;
-
 import java.lang.ref.WeakReference;
+
+import lib.smartlink.BLEService;
+import lib.smartlink.Util;
 
 /**
  * Created by pvaibhav on 17/02/2014.
@@ -40,18 +41,26 @@ public class BLEDeviceInformationService
         extends BLEService {
     public interface Delegate {
         void didUpdateSerialNumber(BLEDeviceInformationService device, String serialNumber);
+
+        void didUpdateSystemID(BLEDeviceInformationService device, String systemID);
     }
 
     private String mSerialNumber;
+    private String mSystemID;
     public WeakReference<Delegate> delegate;
 
     public String getSerialNumber() {
         return mSerialNumber;
     }
 
+    public String getSystemID() {
+        return mSystemID;
+    }
+
     @Override
     public void attached() {
         updateField("serialnumber");
+        updateField("systemid");
     }
 
     @Override
@@ -63,6 +72,27 @@ public class BLEDeviceInformationService
                 delegate.get().didUpdateSerialNumber(this, mSerialNumber);
             } catch (NullPointerException ex) {
                 Log.w("lib-smartlink-devinfo", "No delegate set");
+            }
+        } else if (c.equalsIgnoreCase("systemid")) {
+            byte[] sysIDBytes = getBytesForCharacteristic("systemid");
+
+            byte[] newSysIDBytes = new byte[6];
+            System.arraycopy(sysIDBytes, 0, newSysIDBytes, 0, 3);
+            System.arraycopy(sysIDBytes, 5, newSysIDBytes, 3, 3);
+
+            Util.reverse(newSysIDBytes);
+
+            mSystemID = Util.bytesToHex(newSysIDBytes).toLowerCase();
+
+            if (mSystemID != null)
+                Log.i("lib-smartlink-devinfo", "System ID updated: " + mSystemID);
+
+            if (delegate != null) {
+                try {
+                    delegate.get().didUpdateSystemID(this, mSystemID);
+                } catch (Exception ex) {
+                    Log.i("lib-smartlink-devinfo", "Error in delegate.");
+                }
             }
         }
     }
