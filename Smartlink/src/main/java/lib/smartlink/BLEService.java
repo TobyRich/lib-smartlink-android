@@ -32,7 +32,6 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.util.Log;
 
 import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 /**

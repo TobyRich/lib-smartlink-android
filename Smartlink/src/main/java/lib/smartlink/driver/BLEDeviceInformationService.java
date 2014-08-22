@@ -91,7 +91,7 @@ public class BLEDeviceInformationService
                 try {
                     delegate.get().didUpdateSystemID(this, mSystemID);
                 } catch (Exception ex) {
-                    Log.i("lib-smartlin-devinfo", "Error in delegate.");
+                    Log.i("lib-smartlink-devinfo", "Error in delegate.");
                 }
             }
         }
