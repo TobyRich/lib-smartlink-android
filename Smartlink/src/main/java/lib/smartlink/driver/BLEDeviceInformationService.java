@@ -35,7 +35,9 @@ import lib.smartlink.BLEService;
 import lib.smartlink.Util;
 
 /**
- * Created by pvaibhav on 17/02/2014.
+ * Driver class for version information requests
+ * @author Prashant Vaibhav
+ * @date 10/04/2014.
  */
 public class BLEDeviceInformationService
         extends BLEService {

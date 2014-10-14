@@ -37,7 +37,6 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
-import android.content.Intent;
 import android.util.Log;
 
 import com.dd.plist.NSDictionary;
@@ -63,7 +62,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-/*
+/**
+ * Class representing a BLE device
  * @author pvaibhav
  * @date 13 Feb 20114
  *
@@ -75,6 +75,9 @@ import javax.xml.parsers.ParserConfigurationException;
 public class BluetoothDevice extends BluetoothGattCallback implements BluetoothAdapter.LeScanCallback {
     private static final int MAX_QUEUE_SIZE = 20;
 
+    /**
+     * Delegate used to invoke callbacks
+     */
     public interface Delegate {
         public void didStartService(BluetoothDevice device, String serviceName, BLEService service);
 
@@ -88,7 +91,6 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
     }
 
     private static final String TAG = "lib-smartlink-BluetoothDevice";
-    private static final int REQUEST_ENABLE_BT = 1;
     private static final int ADV_128BIT_UUID_ALL = 0x06;
     private static final int ADV_128BIT_UUID_MORE = 0x07;
 
@@ -107,6 +109,11 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
     boolean allowRudder = true;
     boolean allowMotor = true;
 
+    /**
+     * Class representing a BLE instruction to be serialised through the BLE
+     * queue. The Android BLE implementation can only handle a single operation at a
+     * time so we need to queue them up.
+     */
     protected class BleCommand implements Comparable<BleCommand>, Runnable {
         public static final int ENABLE_NOTIFICATION = 0;
         public static final int DISABLE_NOTIFICATION = 1;
@@ -257,6 +264,16 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         return uuid;
     }
 
+    /**
+     * Create a <code>BluetoothDevice</code>
+     * @param plistFile .plist config file
+     * The .plist file is a standard Apple XML format property list which
+     * specifies the configuration parameters for this instance of the
+     * BluetoothDevice class. This includes the services and its fields that we
+     * want to interact with, which ones are primary (connection-triggering)
+     * services, signal level thresholds for connection etc.
+     * @param owner activity that will use this device
+     */
     public BluetoothDevice(InputStream plistFile, Activity owner) {
         mOwner = owner;
         mCommandQueue = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new PriorityBlockingQueue<Runnable>());
@@ -331,6 +348,10 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         }
     }
 
+    /**
+     * Start scanning for devices and attempt connecting.
+     * @throws BluetoothDisabledException
+     */
     public void connect() throws BluetoothDisabledException {
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) mOwner.getSystemService(Context.BLUETOOTH_SERVICE);
@@ -339,7 +360,7 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
             startScanning();
         } else {
-            throw new BluetoothDisabledException("Bluetooth disabled.");
+            throw new BluetoothDisabledException("Bluetooth is disabled.");
         }
     }
 
@@ -350,22 +371,6 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
     public void updateSignalStrength() {
         if (mBluetoothGatt != null) {
             mBluetoothGatt.readRemoteRssi();
-        }
-    }
-
-    private void initializeBluetooth() {
-        // Initializes Bluetooth adapter.
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) mOwner.getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-
-        // Ensures Bluetooth is available on the device and it is enabled. If not,
-        // displays a dialog requesting user permission to enable Bluetooth.
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            mOwner.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        } else {
-            startScanning();
         }
     }
 
@@ -387,6 +392,12 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         return given.equalsIgnoreCase(s);
     }
 
+    /**
+     * Check whether <code>scanRecord</code> includes any primary (i.e.
+     * connection triggering)  service
+     * @param scanRecord the advertisement packet
+     * @return true if it includes primary services, false otherwise
+     */
     private boolean includesPrimaryService(byte[] scanRecord) {
         if (scanRecord.length < 3)
             return false; // cuz we need at least 3 bytes: len, type, data
@@ -608,6 +619,11 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         }
     }
 
+    /**
+     * Enable or disable notifications
+     * @param c the characteristic for which we want notifications
+     * @param enable
+     */
     private void writeNotificationDescriptor(BluetoothGattCharacteristic c, boolean enable) {
         // ALL HAIL GOOGLE
         final UUID CCC = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");

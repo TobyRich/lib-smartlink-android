@@ -35,6 +35,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
 /**
+ * Parent class of all BLE Services
  * @author pvaibhav
  * @date 13 Feb 2014
  *
@@ -51,7 +52,14 @@ public abstract class BLEService {
     public DataPool mEngineDP;
     public DataPool mRudderDp;
 
-    public void attach(BluetoothGatt gatt, HashMap<String, BluetoothGattCharacteristic> fields, BluetoothDevice bluetoothDevice) {
+    /** Since this class is loaded dynamically, the constructor won't be called.
+     * We call this method when the object is created.
+     * @param gatt
+     * @param fields map between the fields and the actual characteristic reference
+     * @param bluetoothDevice
+     */
+    public void attach(BluetoothGatt gatt, HashMap<String,
+            BluetoothGattCharacteristic> fields, BluetoothDevice bluetoothDevice) {
         this.mParent = new WeakReference<BluetoothDevice>(bluetoothDevice);
         this.mGatt = gatt;
         this.mFields = fields;
@@ -73,6 +81,11 @@ public abstract class BLEService {
         }
     }
 
+    /**
+     * Enable or disable notifications for a characteristic
+     * @param name
+     * @param enable
+     */
     protected void setNotification(String name, boolean enable) {
         try {
             if (enable) {
@@ -87,11 +100,21 @@ public abstract class BLEService {
         }
     }
 
+    /**
+     * Look up the value for the characteristic
+     * @param characteristic
+     * @return the current value of the <code>characteristic</code>
+     */
     protected String getStringValueForCharacteristic(String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         return c.getStringValue(0);
     }
 
+    /**
+     * Look up the value for the characteristic
+     * @param characteristic
+     * @return the current value of the <code>characteristic</code>
+     */
     protected Integer getUint8ValueForCharacteristic(String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         if (c == null) {
@@ -100,26 +123,51 @@ public abstract class BLEService {
         return c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
     }
 
+    /**
+     * Look up the value for the characteristic
+     * @param characteristic
+     * @return the current value of the <code>characteristic</code>
+     */
     protected Integer getUin16ValueForCharacteristic(String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         return c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0);
     }
 
+    /**
+     * Look up the value for the characteristic
+     * @param characteristic
+     * @return the current value of the <code>characteristic</code>
+     */
     protected byte[] getBytesForCharacteristic(String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         return c.getValue();
     }
 
+    /**
+     * Look up the value for the characteristic
+     * @param characteristic
+     * @return the current value of the <code>characteristic</code>
+     */
     protected Integer getInt8ValueForCharacteristic(String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         return c.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 0);
     }
 
+    /**
+     * Enable or disable acknowledgement on write
+     * @param responsNeeded
+     * @param characteristic
+     */
     protected void setWriteNeedsResponse(boolean responsNeeded, String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         c.setWriteType(responsNeeded ? BluetoothGattCharacteristic.WRITE_TYPE_SIGNED : BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
     }
 
+    /**
+     * Set the <code>characteristic</code> to <code>value</code>
+     * @param value
+     * @param characteristic
+     */
     @SuppressWarnings("StringEquality")
     protected void writeUint8Value(short value, String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
@@ -143,6 +191,11 @@ public abstract class BLEService {
         mParent.get().enqueueOperation(BluetoothDevice.BleCommand.WRITE, c, extraOpt);
     }
 
+    /**
+     * Set the <code>characteristic</code> to <code>value</code>
+     * @param value
+     * @param characteristic
+     */
     protected void writeInt8Value(byte value, String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         BluetoothDevice bDevice = mParent.get();
@@ -165,6 +218,11 @@ public abstract class BLEService {
         mParent.get().enqueueOperation(BluetoothDevice.BleCommand.WRITE, c, extraOpt);
     }
 
+    /**
+     * Set the <code>characteristic</code> to <code>value</code>
+     * @param value
+     * @param characteristic
+     */
     protected void writeBytes(byte[] value, String characteristic) {
         BluetoothGattCharacteristic c = mFields.get(characteristic);
         c.setValue(value);

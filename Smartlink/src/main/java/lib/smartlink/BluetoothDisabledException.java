@@ -1,6 +1,7 @@
 package lib.smartlink;
 
 /**
+ * Bluetooth must be enabled by user
  * @author Radu Hambasan
  * @date 21 Jul 2014
  */

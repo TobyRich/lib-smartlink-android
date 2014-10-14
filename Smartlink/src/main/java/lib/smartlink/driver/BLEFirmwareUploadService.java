@@ -41,9 +41,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Timer;
 import java.util.TimerTask;
-
 /**
- * Created by pvaibhav on 17/04/2014.
+ * Driver class for firmware upload
+ * @author Prashant Vaibhav
+ * @date 10/04/2014.
  */
 public class BLEFirmwareUploadService extends BLEService {
     private static final String TAG = "Firmware";

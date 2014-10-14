@@ -34,7 +34,9 @@ import java.lang.ref.WeakReference;
 import lib.smartlink.BLEService;
 
 /**
- * Created by pvaibhav on 13/02/2014.
+ * Driver class for Smartplane interaction
+ * @author Prashant Vaibhav
+ * @date 10/04/2014.
  */
 public class BLESmartplaneService
         extends BLEService {

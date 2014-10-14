@@ -34,7 +34,9 @@ import lib.smartlink.BLEService;
 import java.lang.ref.WeakReference;
 
 /**
- * Created by pvaibhav on 10/04/2014.
+ * Driver class for battery interaction
+ * @author Prashant Vaibhav
+ * @date 10/04/2014.
  */
 public class BLEBatteryService extends BLEService {
     public interface Delegate {
