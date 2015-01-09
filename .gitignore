@@ -1,5 +1,6 @@
 .gradle
 .DS_Store
+.*.un~ # vim undo files
 
 # --- everything below sourced from http://stackoverflow.com/questions/16640566/which-files-shouldnt-be-checked-in-into-version-control-in-android-studio/18454251
 # built application files

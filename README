@@ -10,12 +10,13 @@ Build Instructions
 ------------------
 The location of the LibSmartlink.jar will be
 Smartlink/build/libs/LibSmartlink.jar
+If it doesn't show up on first try, try again.
 
-requirements: gradle 1.10 installed
+requirements: chmod +x ./gradelw 
 
 to make a jar file:
-   gradle makeJar
+   ./gradlew makeJar
 
 to clean files:
-   gradle clearJar
+   ./gradlew clearJar
 

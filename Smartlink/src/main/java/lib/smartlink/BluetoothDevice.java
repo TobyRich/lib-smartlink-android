@@ -41,6 +41,7 @@ import android.util.Log;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
+import com.dd.plist.NSString;
 import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
 
@@ -65,7 +66,7 @@ import javax.xml.parsers.ParserConfigurationException;
 /**
  * Class representing a BLE device
  * @author pvaibhav
- * @date 13 Feb 20114
+ * @date 13 Feb 2014
  *
  * @edit Radu Hambasan
  * @date 11 Jul 2014
@@ -93,6 +94,8 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
     private static final String TAG = "lib-smartlink-BluetoothDevice";
     private static final int ADV_128BIT_UUID_ALL = 0x06;
     private static final int ADV_128BIT_UUID_MORE = 0x07;
+    private static final int ADV_128BIT_UUID_SHORTNAME = 0x08;
+    private static final int ADV_128BIT_UUID_FULLNAME = 0x09;
 
     public WeakReference<Delegate> delegate;
     public boolean automaticallyReconnect = false;
@@ -104,6 +107,7 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothGatt mBluetoothGatt;
     private UUID[] mPrimaryServices;
+    private String mDeviceName;
     private final Semaphore mSemaphore = new Semaphore(1); // single threaded access
 
     boolean allowRudder = true;
@@ -295,7 +299,8 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         // Collect basic settings
         rssiHigh = ((NSNumber) mPlist.objectForKey("rssi high")).intValue();
         rssiLow = ((NSNumber) mPlist.objectForKey("rssi low")).intValue();
-
+        mDeviceName = mPlist.objectForKey("device name").toString();
+        Log.d(TAG, "Device name: " + mDeviceName);
 
         // Build a list of all primary services to scan for
         NSDictionary services = (NSDictionary) mPlist.objectForKey("Services");
@@ -420,6 +425,33 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         return false;
     }
 
+    /**
+     * Check whether <code>scanRecord</code> includes a known device name. Some phones don't send
+     * full advertising data including scan response payload, but only send the first advertising
+     * packet which might not contain the 128 bit service UUID. Or something like that.
+     * @param scanRecord the advertisement packet
+     * @return true if it includes preset device name
+     */
+    // TODO: code smell: very similar to above function. refactor.
+    private boolean includesDeviceName(byte[] scanRecord) {
+        if (scanRecord.length < 3)
+            return false; // cuz we need at least 3 bytes: len, type, data
+
+        int offset = 0;
+        do {
+            final int len = scanRecord[offset++];
+            final int type = scanRecord[offset++];
+            if (type == ADV_128BIT_UUID_SHORTNAME || type == ADV_128BIT_UUID_FULLNAME) {
+                byte[] uuidBytes = Util.subarray(scanRecord, offset, offset + len - 1);
+                String name = new String(uuidBytes);
+                if (name.equalsIgnoreCase(mDeviceName))
+                    return true;
+            }
+            offset += len - 1;
+        } while (offset < scanRecord.length - 1); // len-1 cuz each time we read at least 2 bytes
+        return false;
+    }
+
     @Override
     public void onLeScan(android.bluetooth.BluetoothDevice d, int rssi, byte[] scanRecord) {
         // When scan results are received
@@ -439,8 +471,13 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         }
 
         if (!includesPrimaryService(scanRecord)) {
-            Log.i(TAG, "No primary services found. Skipping...");
-            return;
+            Log.i(TAG, "No primary services found. Checking for device name...");
+            if (!includesDeviceName(scanRecord)) {
+                Log.i(TAG, "Device name also doesn't match. Skipping...");
+                return;
+            } else {
+                Log.i(TAG, "Device name matched, will connect");
+            }
         } else {
             Log.i(TAG, "Primary services found.");
         }
