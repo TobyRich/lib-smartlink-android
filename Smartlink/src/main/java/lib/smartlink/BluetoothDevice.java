@@ -41,6 +41,7 @@ import android.util.Log;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
+import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
@@ -299,7 +300,10 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
         // Collect basic settings
         rssiHigh = ((NSNumber) mPlist.objectForKey("rssi high")).intValue();
         rssiLow = ((NSNumber) mPlist.objectForKey("rssi low")).intValue();
-        mDeviceName = mPlist.objectForKey("device name").toString();
+        NSObject devName = mPlist.objectForKey("device name");
+        if (devName != null) {
+            mDeviceName = devName.toString();
+        }
         Log.d(TAG, "Device name: " + mDeviceName);
 
         // Build a list of all primary services to scan for
