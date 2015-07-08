@@ -32,7 +32,6 @@ import android.util.Log;
 import lib.smartlink.BLEService;
 import lib.smartlink.Util;
 
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Timer;
 import java.util.TimerTask;
+
 /**
  * Driver class for firmware upload
  * @author Prashant Vaibhav

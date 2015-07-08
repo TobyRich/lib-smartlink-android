@@ -42,7 +42,6 @@ import android.util.Log;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
 import com.dd.plist.NSObject;
-import com.dd.plist.NSString;
 import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
 
@@ -81,15 +80,17 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
      * Delegate used to invoke callbacks
      */
     public interface Delegate {
-        public void didStartService(BluetoothDevice device, String serviceName, BLEService service);
+        void didStartService(BluetoothDevice device, String serviceName, BLEService service);
 
-        public void didUpdateSignalStrength(BluetoothDevice device, float signalStrength);
+        void didUpdateSignalStrength(BluetoothDevice device, float signalStrength);
 
-        public void didStartScanning(BluetoothDevice device);
+        void didStartScanning(BluetoothDevice device);
 
-        public void didStartConnectingTo(BluetoothDevice device, float signalStrength);
+        void didStartConnectingTo(BluetoothDevice device, float signalStrength);
 
-        public void didDisconnect(BluetoothDevice device);
+        void didDisconnect(BluetoothDevice device);
+
+        void didConnect(BluetoothDevice device);
     }
 
     private static final String TAG = "lib-smartlink-BluetoothDevice";
@@ -521,6 +522,9 @@ public class BluetoothDevice extends BluetoothGattCallback implements BluetoothA
                 mBluetoothGatt = gatt;
                 mSemaphore.release(); // because connection is also a queued operation
                 enqueueOperation(BleCommand.DISCOVER_SERVICES);
+                if (delegate.get() != null) {
+                    delegate.get().didConnect(this);
+                }
                 break;
             case BluetoothProfile.STATE_DISCONNECTED:
                 charToDriver.clear();
