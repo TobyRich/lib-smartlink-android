@@ -35,6 +35,7 @@ import java.lang.ref.WeakReference;
 
 /**
  * Driver class for battery interaction
+ *
  * @author Prashant Vaibhav
  * @date 10/04/2014.
  */
@@ -44,6 +45,7 @@ public class BLEBatteryService extends BLEService {
     }
 
     public WeakReference<Delegate> delegate;
+    private int lastBatteryLevel = 0;
 
     protected void attached() {
         updateField("level"); // initially
@@ -55,10 +57,15 @@ public class BLEBatteryService extends BLEService {
         if (c.equalsIgnoreCase("level")) {
             int level = getUint8ValueForCharacteristic("level");
             try {
+                lastBatteryLevel = level;
                 delegate.get().didUpdateBatteryLevel(level);
             } catch (NullPointerException ex) {
                 Log.w(this.getClass().getName(), "No delegate set");
             }
         }
+    }
+
+    public int getLastBatteryLevel() {
+        return lastBatteryLevel;
     }
 }

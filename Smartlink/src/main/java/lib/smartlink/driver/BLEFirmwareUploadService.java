@@ -43,6 +43,7 @@ import java.util.TimerTask;
 
 /**
  * Driver class for firmware upload
+ *
  * @author Prashant Vaibhav
  * @date 10/04/2014.
  */
@@ -58,9 +59,13 @@ public class BLEFirmwareUploadService extends BLEService {
 
     public interface Delegate {
         void didGetFirmwareRejected(BLEFirmwareUploadService driver, String fwName);
+
         void didUploadFirmwareUpto(BLEFirmwareUploadService driver, float percent);
+
         void didFinishUploadingFirmware(BLEFirmwareUploadService driver);
+
         void didReceiveFirmwareVersion(BLEFirmwareUploadService driver, String fwVersion);
+
         boolean shouldStartUploadingFirmware(BLEFirmwareUploadService driver, String fwName);
     }
 
@@ -271,7 +276,7 @@ public class BLEFirmwareUploadService extends BLEService {
         final float progress = (float) _iBlocks / (float) _nBlocks;
         try {
             if (_iBlocks % 20 == 0)
-            delegate.get().didUploadFirmwareUpto(this, progress * 100);
+                delegate.get().didUploadFirmwareUpto(this, progress * 100);
         } catch (NullPointerException e) {
             Log.w(TAG, "No delegate set");
         }
